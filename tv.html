@@ -253,7 +253,8 @@ let resetTimer;
 onChildAdded(lastQuery, (snap) => {
   const data = snap.val();
   if(!data || !data.time) return;
-  if (data.time < loadTime) return;
+  if (data.time <= lastDisplayedTime) return;
+  lastDisplayedTime = data.time;
 
   showWinner(data);
 });
