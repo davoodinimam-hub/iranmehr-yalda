@@ -212,7 +212,18 @@ body {
 <!-- کتابخانه QR Code و Confetti و Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-database-compat.js"></script>
+<script>
+  const spinPageUrl = "https://iranmehr2.vercel.app";
 
+  new QRCode(document.getElementById("qrcode"), {
+    text: spinPageUrl,
+    width: 110,
+    height: 110,
+    colorDark : "#800020",
+    colorLight : "#ffffff",
+    correctLevel : QRCode.CorrectLevel.H
+  });
+</script>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyC2hX016YUfRGTaJ913oMXCUnaY-IbvLUs",
