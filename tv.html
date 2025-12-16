@@ -210,103 +210,61 @@ body {
 <div class="footer">IRANMEHR BEAUTY CLINIC</div>
 
 <!-- کتابخانه QR Code و Confetti و Firebase -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-database-compat.js"></script>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, query, limitToLast, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyC2hX016YUfRGTaJ913oMXCUnaY-IbvLUs",
+    authDomain: "iranmehr-6518f.firebaseapp.com",
+    databaseURL: "https://iranmehr-6518f-default-rtdb.firebaseio.com",
+    projectId: "iranmehr-6518f",
+    storageBucket: "iranmehr-6518f.firebasestorage.app",
+    messagingSenderId: "171332068534",
+    appId: "1:171332068534:web:4391388fbcf4b3e74b3217"
+  };
 
-const firebaseConfig = {
-  apiKey: "AIzaSyC2hX016YUfRGTaJ913oMXCUnaY-IbvLUs",
-  authDomain: "iranmehr-6518f.firebaseapp.com",
-  databaseURL: "https://iranmehr-6518f-default-rtdb.firebaseio.com",
-  projectId: "iranmehr-6518f",
-  storageBucket: "iranmehr-6518f.firebasestorage.app",
-  messagingSenderId: "171332068534",
-  appId: "1:171332068534:web:4391388fbcf4b3e74b3217",
-  measurementId: "G-GM9HBHCF6K"
-};
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const resultsRef = ref(db, 'results');
-let lastDisplayedTime = 0;
+  let lastKey = null;
+  let resetTimer = null;
 
-// --- تنظیمات QR Code ---
-// آدرس نهایی پروژه در Vercel
-const spinPageUrl = "https://iranmehr2.vercel.app";
+  function showWinner(data) {
+    const waitingEl = document.getElementById("waitingMsg");
+    const contentEl = document.getElementById("winnerContent");
 
-new QRCode(document.getElementById("qrcode"), {
-    text: spinPageUrl,
-    width: 110,
-    height: 110,
-    colorDark : "#800020", // رنگ QR کد زرشکی
-    colorLight : "#ffffff",
-    correctLevel : QRCode.CorrectLevel.H
-});
+    waitingEl.style.display = "none";
+    contentEl.style.display = "block";
 
-// --- لاجیک نمایش برنده ---
-const loadTime = Date.now();
-const lastQuery = query(resultsRef, limitToLast(1));
-let resetTimer;
+    document.getElementById("wName").innerText = data.name;
+    document.getElementById("wPrize").innerText = data.prize;
 
-onChildAdded(lastQuery, (snap) => {
-  const data = snap.val();
-  if(!data || !data.time) return;
-  if (data.time <= lastDisplayedTime) return;
-  lastDisplayedTime = data.time;
-
-  showWinner(data);
-});
-
-function showWinner(data) {
-  const waitingEl = document.getElementById('waitingMsg');
-  const contentEl = document.getElementById('winnerContent');
-  
-  waitingEl.style.display = 'none';
-  contentEl.style.display = 'none';
-  
-  setTimeout(() => {
-    contentEl.style.display = 'block';
-    document.getElementById('wName').innerText = data.name;
-    document.getElementById('wPrize').innerText = data.prize;
     fireConfetti();
-  }, 100);
 
-  clearTimeout(resetTimer);
-  resetTimer = setTimeout(() => {
-    contentEl.style.display = 'none';
-    waitingEl.style.display = 'block';
-  }, 20000);
-}
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => {
+      contentEl.style.display = "none";
+      waitingEl.style.display = "block";
+    }, 20000);
+  }
 
-function fireConfetti() {
-    // افکت طلایی و قرمز
-    const duration = 3000;
-    const end = Date.now() + duration;
+  function pollLatestResult() {
+    db.ref("results")
+      .limitToLast(1)
+      .once("value", snap => {
+        if (!snap.exists()) return;
 
-    (function frame() {
-        confetti({
-            particleCount: 5,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0 },
-            colors: ['#FFD700', '#D32F2F', '#FFFFFF']
+        snap.forEach(child => {
+          if (child.key !== lastKey) {
+            lastKey = child.key;
+            showWinner(child.val());
+          }
         });
-        confetti({
-            particleCount: 5,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1 },
-            colors: ['#FFD700', '#D32F2F', '#FFFFFF']
-        });
+      });
+  }
 
-        if (Date.now() < end) {
-            requestAnimationFrame(frame);
-        }
-    }());
-}
+  setInterval(pollLatestResult, 1000);
 </script>
 </body>
 </html>
